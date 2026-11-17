@@ -31,3 +31,7 @@ deploy/.env
 
 # 上游文件（如需本地比对上游，放在这里，不入库）
 upstream/
+
+# 提交信息临时文件
+.commitmsg*
+.commit-msg*
