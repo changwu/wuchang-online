@@ -3,7 +3,7 @@
 `index.html` 是**一个可以独立分发的 .html 文件（约 840KB）**，把 Opus 编解码器
 和应用逻辑全部内联，不加载任何外部资源。
 
-在线访问：`https://<用户名>.github.io/wuchang-online/standalone/`
+在线访问：<https://wuchang.me/standalone/>
 
 ## 为什么不能去掉 Opus
 

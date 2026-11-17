@@ -11,16 +11,17 @@
 
 ## 在线地址
 
-部署在 GitHub Pages 后（项目站点路径）：
+站点地址：
 
 | 页面 | 地址 | 说明 |
 |---|---|---|
-| 完整版 | `/` | Live2D 形象 + 语音对话 + 文字输入 + MCP 调试 |
-| 单文件版 | `/standalone/` | 一个自包含 HTML，内置 Opus |
-| 部署自检 | `/diagnostics.html` | 检查资源、OTA 接口、WebSocket 握手 |
+| 完整版 | <https://wuchang.me/> | Live2D 形象 + 语音对话 + 文字输入 + MCP 调试 |
+| 单文件版 | <https://wuchang.me/standalone/> | 一个自包含 HTML，内置 Opus |
+| 部署自检 | <https://wuchang.me/diagnostics.html> | 检查资源、OTA、WebSocket |
 
-如果你的 Pages 地址是 `https://<用户名>.github.io/wuchang-online/`，
-那么完整版就是 `https://<用户名>.github.io/wuchang-online/`。
+自定义域名 `wuchang.me` 已指向本项目（`CNAME` 文件）。
+项目站点默认地址 `https://changwu.github.io/wuchang-online/` 也能访问，
+但自定义域名后 GitHub 会把前者重定向到后者。
 
 ## 功能
 
@@ -55,7 +56,16 @@
 1. 仓库 **Settings → Pages**
 2. **Source** 选 `Deploy from a branch`
 3. **Branch** 选 `main`，目录选 `/ (root)`
-4. 保存，等约 1 分钟后访问 `https://<用户名>.github.io/wuchang-online/`
+4. 保存，等约 1 分钟后访问
+
+自定义域名由仓库根目录的 `CNAME` 文件决定（当前为 `wuchang.me`）。
+换域名时改这个文件即可，DNS 需要对应配置：
+
+- 裸域名 `wuchang.me` → 4 条 A 记录指向 `185.199.108.153`、
+  `185.199.109.153`、`185.199.110.153`、`185.199.111.153`
+- `www.wuchang.me` → CNAME 指向 `changwu.github.io`
+
+配置好域名后 GitHub 会自动签发 HTTPS 证书，通常几分钟内完成。
 
 ### 方式二：命令行
 
