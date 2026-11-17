@@ -45,13 +45,16 @@
 
   <div class="card">
     <label for="ota">默认 OTA 地址（会写进生成的文件）</label>
-    <input type="text" id="ota" value="https://xiaozhi.xiada.cn/xiaozhi/ota/">
+    <input type="text" id="ota" value="http://localhost:8002/xiaozhi/ota/"
+           placeholder="填你自己的 xiaozhi-server 地址">
     <div class="row">
       <button class="primary" id="btn">生成并下载</button>
     </div>
     <a class="dl" id="dl" download="index.html">↓ 下载 index.html</a>
     <div class="hint">
-      生成的文件约 840KB，包含内联的 Opus 编解码器，不请求任何外部资源。
+      生成的文件约 840KB，包含内联的 Opus 编解码器，不请求任何外部资源。<br>
+      <b>上面填你自己的后端地址。</b>默认 <code>localhost:8002</code> 只在
+      本机跑着 xiaozhi-server 时有效；分发给别人前记得改成对方能访问的地址。
     </div>
   </div>
 
@@ -146,7 +149,9 @@ var TEMPLATE = [
 '    <div class="meter"><i id="lvl"></i></div>',
 '    <div class="hint">',
 '      连上后点「按住说话」（或按住空格）。服务端自己做 VAD 断句，松开不会立刻结束。',
-'      回答会自动播放。',
+'      回答会自动播放。<br>',
+'      <b>上面的 OTA 地址要填你自己的后端。</b>默认 localhost:8002 只在',
+'      你本机跑着 xiaozhi-server 时有效。',
 '    </div>',
 '  </div>',
 '',
@@ -169,7 +174,7 @@ var TEMPLATE = [
 ].join('\n');
 
 async function build() {
-  var ota = $("ota").value.trim() || "https://xiaozhi.xiada.cn/xiaozhi/ota/";
+  var ota = $("ota").value.trim() || "http://localhost:8002/xiaozhi/ota/";
   $("btn").disabled = true;
   $("dl").style.display = "none";
   log("开始构建…", "i");

@@ -36,12 +36,9 @@
   #log { height:240px; overflow-y:auto; background:#0b0d11; border-radius:7px;
     padding:10px; font:12px/1.65 ui-monospace,Consolas,monospace;
     white-space:pre-wrap; word-break:break-all; }
-  #log .t { color:#5a6274; }
-  #log .i { color:#79c0ff; }
-  #log .w { color:var(--warn); }
-  #log .e { color:var(--err); }
-  #log .u { color:#7ee787; }
-  #log .a { color:#d2a8ff; }
+  #log .t { color:#5a6274; } #log .i { color:#79c0ff; }
+  #log .w { color:var(--warn); } #log .e { color:var(--err); }
+  #log .u { color:#7ee787; } #log .a { color:#d2a8ff; }
   .meter { height:3px; background:#22262f; border-radius:2px; margin-top:10px; overflow:hidden; }
   .meter > i { display:block; height:100%; width:0; background:var(--ok); transition:width .08s linear; }
   .hint { font-size:12px; color:var(--dim); margin-top:10px; line-height:1.7; }
@@ -54,7 +51,7 @@
 
   <div class="card">
     <label for="ota">OTA 服务器地址</label>
-    <input type="text" id="ota" value="https://xiaozhi.xiada.cn/xiaozhi/ota/">
+    <input type="text" id="ota" value="http://localhost:8002/xiaozhi/ota/">
     <div class="row">
       <button class="primary" id="btnConnect">连接</button>
       <button id="btnTalk" disabled>按住说话</button>
@@ -63,7 +60,9 @@
     <div class="meter"><i id="lvl"></i></div>
     <div class="hint">
       连上后点「按住说话」（或按住空格）。服务端自己做 VAD 断句，松开不会立刻结束。
-      回答会自动播放。
+      回答会自动播放。<br>
+      <b>上面的 OTA 地址要填你自己的后端。</b>默认 localhost:8002 只在
+      你本机跑着 xiaozhi-server 时有效。
     </div>
   </div>
 
@@ -74,7 +73,6 @@
   <div class="card"><div id="log"></div></div>
 </div>
 
-<!-- ========== 内联 libopus（asm.js，约 825KB） ========== -->
 <script>
 var Module = function(Module) {
     Module = Module || {};
@@ -342,9 +340,9 @@ var Module = function(Module) {
     return Module;
   };
   Module.instance = Module();
-</script>
+</
+script>
 
-<!-- ========== 应用逻辑 ========== -->
 <script>
 /* 小缺 · 单文件语音客户端（应用逻辑）
  *
@@ -833,6 +831,7 @@ window.addEventListener("load", function () {
   });
 });
 
-</script>
+</
+script>
 </body>
 </html>

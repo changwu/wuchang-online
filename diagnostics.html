@@ -50,7 +50,12 @@
 
   <div class="card">
     <label for="ota">OTA 服务器地址</label>
-    <input type="text" id="ota" value="https://xiaozhi.xiada.cn/xiaozhi/ota/">
+    <input type="text" id="ota" value="http://localhost:8002/xiaozhi/ota/"
+           placeholder="填你自己的 xiaozhi-server 地址，如 https://your-server.com/xiaozhi/ota/">
+    <div class="hint" style="margin-top:8px">
+      <b>这里要填你自己的后端。</b>默认的 <code>localhost:8002</code> 只在你本机
+      跑着 xiaozhi-server 时有效。别人的服务器地址填进来才能检查。
+    </div>
     <div class="row">
       <button class="primary" id="btnRun">运行全部检查</button>
     </div>

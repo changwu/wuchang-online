@@ -45,7 +45,8 @@
 这意味着：**只要后端能服务真设备，本页面就能用**，无需改后端。
 
 > ⚠️ 打开页面后请把「OTA 服务器地址」改成**你自己的**后端。
-> 默认填的是作者自己的实例，仅供试用。
+> 默认值是 `http://localhost:8002/xiaozhi/ota/` —— xiaozhi-server 的默认
+> 本地端口，只在你本机跑着后端时有效。本站不提供公共后端。
 
 ## 部署到 GitHub Pages
 
@@ -138,7 +139,7 @@ elif isinstance(message, bytes):
 要改**默认值**（比如分发给别人），改 `index.html` 里这一行的 `value`：
 
 ```html
-<input type="text" id="otaUrl" value="https://xiaozhi.xiada.cn/xiaozhi/ota/">
+<input type="text" id="otaUrl" value="http://localhost:8002/xiaozhi/ota/">
 ```
 
 单文件版则在 `standalone/build.html` 里填好再生成。
