@@ -29,6 +29,28 @@
 
 这意味着：**只要后端能服务真设备，本页面就能用**，无需改后端。
 
+## 想要「纯 HTML」？
+
+`standalone/index.html` 是**一个自包含的 .html 文件**（约 840KB），
+把 Opus 编解码器和全部逻辑内联，不加载任何外部资源。
+
+但要说清一个协议层的硬约束：**它不可能做成零依赖的裸 PCM 方案**。
+xiaozhi 服务端上行是无条件按 Opus 解码的（`core/connection.py` 里的
+`_decode_opus_packet`），下行 TTS 也硬编码 `is_opus=True`。
+所以浏览器端必须有 Opus 编解码器 —— 那 825KB 就是它，不是可以省掉的。
+
+```bash
+cd standalone
+python3 -m http.server 8080
+# 浏览器打开 http://localhost:8080/
+```
+
+注意：**不能双击用 file:// 打开**。浏览器只在安全上下文（HTTPS 或
+localhost）里授予麦克风权限，file:// 不算。
+
+不用 WebCodecs 的原因、以及内联 asm.js 的实测数据，见
+[standalone/README.md](standalone/README.md)。
+
 ## 快速开始
 
 ### 方式一：本地静态服务（最快）
@@ -183,7 +205,12 @@ PY
 ├── images/                 # 背景图
 ├── resources/              # Live2D 模型运行时文件
 ├── deploy/                 # 部署配置示例
-└── scripts/                # 辅助脚本
+├── scripts/                # 辅助脚本
+└── standalone/             # 单文件版本（内联 Opus，可独立分发）
+    ├── app.js              #   应用逻辑（可读源码）
+    ├── build.py            #   生成器：app.js + libopus.js -> index.html
+    ├── index.html          #   产物：自包含 HTML（约 840KB）
+    └── README.md
 ```
 
 ## 依赖的后端
