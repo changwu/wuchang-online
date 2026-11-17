@@ -1,0 +1,35 @@
+# 统一换行符为 LF（本项目部署在 Linux，避免 CRLF 引入怪问题）
+* text=auto eol=lf
+
+# 明确的文本类型
+*.html      text eol=lf
+*.css       text eol=lf
+*.js        text eol=lf
+*.json      text eol=lf
+*.md        text eol=lf
+*.py        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+.gitignore  text eol=lf
+.gitattributes text eol=lf
+Dockerfile  text eol=lf
+LICENSE     text eol=lf
+
+# 二进制资源，不做任何转换
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.webp      binary
+*.ico       binary
+*.moc3      binary
+*.cmo3      binary
+*.can3      binary
+*.exp3.json binary
+*.motion3.json binary
+*.physics3.json binary
+*.cdi3.json binary
+*.ogg       binary
+*.mp3       binary
+*.woff      binary
+*.woff2     binary
