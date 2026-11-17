@@ -411,6 +411,24 @@
             console.error('未处理的Promise拒绝:', event.reason);
         });
     </script>
+
+    <!-- ========== 站点导航（本项目部署在 GitHub Pages，这里让同仓库的其它页面可被发现） ========== -->
+    <style>
+        .wo-nav {
+            position: fixed; right: 12px; bottom: 12px; z-index: 9999;
+            display: flex; gap: 8px; font: 12px/1 -apple-system, "Segoe UI", sans-serif;
+        }
+        .wo-nav a {
+            padding: 7px 11px; border-radius: 7px; text-decoration: none;
+            color: #c9d1d9; background: rgba(22, 26, 33, .92);
+            border: 1px solid #2d323c; backdrop-filter: blur(6px);
+        }
+        .wo-nav a:hover { background: #22262f; color: #e6e8ee; }
+    </style>
+    <div class="wo-nav">
+        <a href="standalone/" title="单个 HTML 文件，内置 Opus">单文件版</a>
+        <a href="diagnostics.html" title="检查资源、OTA、WebSocket">部署自检</a>
+    </div>
 </body>
 
 </html>

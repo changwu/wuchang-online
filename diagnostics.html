@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>部署自检 · wuchang-online</title>
+<style>
+  :root { --bg:#0f1115; --card:#191c23; --fg:#e6e8ee; --dim:#8b93a7;
+          --ok:#3fb950; --err:#f85149; --warn:#d29922; --accent:#4493f8; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:24px; font:14px/1.6 -apple-system,"Segoe UI",system-ui,sans-serif;
+         background:var(--bg); color:var(--fg); }
+  .wrap { max-width:820px; margin:0 auto; }
+  h1 { font-size:18px; margin:0 0 4px; font-weight:600; }
+  .sub { color:var(--dim); font-size:12px; margin-bottom:20px; }
+  .card { background:var(--card); border:1px solid #262a33; border-radius:10px;
+          padding:16px; margin-bottom:14px; }
+  h2 { font-size:13px; margin:0 0 10px; font-weight:600; color:var(--dim);
+       text-transform:uppercase; letter-spacing:.04em; }
+  label { display:block; font-size:12px; color:var(--dim); margin-bottom:6px; }
+  input[type=text] { width:100%; padding:9px 11px; border-radius:7px;
+    border:1px solid #2d323c; background:#11141a; color:var(--fg);
+    font:inherit; font-size:13px; }
+  input[type=text]:focus { outline:none; border-color:var(--accent); }
+  .row { display:flex; gap:9px; margin-top:12px; flex-wrap:wrap; }
+  button { padding:9px 16px; border-radius:7px; border:1px solid #2d323c;
+    background:#22262f; color:var(--fg); font:inherit; font-size:13px; cursor:pointer; }
+  button:hover:not(:disabled) { background:#2a2f39; }
+  button:disabled { opacity:.42; cursor:not-allowed; }
+  button.primary { background:#1f6feb; border-color:#1f6feb; }
+  button.primary:hover:not(:disabled) { background:#2a7aef; }
+  table { width:100%; border-collapse:collapse; font:12px/1.6 ui-monospace,Consolas,monospace; }
+  td { padding:3px 8px 3px 0; vertical-align:top; }
+  td.s { width:22px; }
+  td.n { width:74px; text-align:right; color:var(--dim); white-space:nowrap; }
+  .ok { color:var(--ok); } .bad { color:var(--err); } .warn { color:var(--warn); }
+  .dim { color:var(--dim); }
+  .summary { margin-top:14px; padding:10px 12px; border-radius:7px;
+             font-size:13px; font-weight:600; }
+  .summary.pass { background:#12261a; color:var(--ok); border:1px solid #1c4427; }
+  .summary.fail { background:#2a1416; color:var(--err); border:1px solid #5c2024; }
+  .hint { font-size:12px; color:var(--dim); margin-top:10px; line-height:1.7; }
+  code { background:#22262f; padding:1px 5px; border-radius:4px; font-size:12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>部署自检</h1>
+  <div class="sub">检查资源可达性、OTA 接口、WebSocket 握手</div>
+
+  <div class="card">
+    <label for="ota">OTA 服务器地址</label>
+    <input type="text" id="ota" value="https://xiaozhi.xiada.cn/xiaozhi/ota/">
+    <div class="row">
+      <button class="primary" id="btnRun">运行全部检查</button>
+    </div>
+    <div class="hint">
+      这个页面本身是静态的，所有检查都在你浏览器里跑 —— 和真实用户看到的
+      网络条件一致。特别是 WebSocket 检查：浏览器握手会带 <code>Origin</code>，
+      而硬件设备不会，所以这一步能发现"设备正常但网页连不上"的问题。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>1 · 主页面资源</h2>
+    <div id="assets"><span class="dim">未运行</span></div>
+  </div>
+
+  <div class="card">
+    <h2>2 · 单文件版</h2>
+    <div id="single"><span class="dim">未运行</span></div>
+  </div>
+
+  <div class="card">
+    <h2>3 · OTA 接口</h2>
+    <div id="otabox"><span class="dim">未运行</span></div>
+  </div>
+
+  <div class="card">
+    <h2>4 · WebSocket（带 Origin）</h2>
+    <div id="wsbox"><span class="dim">未运行</span></div>
+  </div>
+
+  <div class="card">
+    <div id="summary" class="dim">点上面的按钮开始。</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+var $ = function (id) { return document.getElementById(id); };
+var failures = 0;
+
+function row(container, ok, name, detail, cls) {
+  var tr = document.createElement("tr");
+  var s = document.createElement("td");
+  s.className = "s " + (ok === true ? "ok" : ok === false ? "bad" : "warn");
+  s.textContent = ok === true ? "✓" : ok === false ? "✗" : "–";
+  var n = document.createElement("td");
+  n.textContent = name;
+  var d = document.createElement("td");
+  d.className = cls || "";
+  d.textContent = detail;
+  tr.appendChild(s); tr.appendChild(n); tr.appendChild(d);
+  var table = container.querySelector("table");
+  if (!table) {
+    table = document.createElement("table");
+    container.innerHTML = "";
+    container.appendChild(table);
+  }
+  table.appendChild(tr);
+}
+
+function reset(el) { el.innerHTML = '<span class="dim">检查中…</span>'; }
+
+async function head(url) {
+  try {
+    var r = await fetch(url, { method: "GET", cache: "no-store" });
+    return { ok: r.ok, status: r.status, size: (await r.text()).length };
+  } catch (e) {
+    return { ok: false, status: "ERR", error: e.message };
+  }
+}
+
+/* ---------- 1. 主页面资源 ---------- */
+async function checkAssets() {
+  var box = $("assets");
+  reset(box);
+
+  var r = await fetch("index.html", { cache: "no-store" });
+  if (!r.ok) {
+    row(box, false, "index.html", "HTTP " + r.status);
+    failures++;
+    return;
+  }
+  var html = await r.text();
+  row(box, true, "index.html", Math.round(html.length / 1024) + " KB");
+
+  // 页面里的 resource 引用
+  var re = /(?:src|href)="([^"]+)"/g;
+  var refs = [];
+  var m;
+  while ((m = re.exec(html)) !== null) {
+    var u = m[1].split("?")[0];
+    if (/^(https?:|#|data:|mailto:|\/\/)/.test(u)) { continue; }
+    if (refs.indexOf(u) < 0) { refs.push(u); }
+  }
+
+  for (var i = 0; i < refs.length; i++) {
+    var res = await head(refs[i]);
+    if (!res.ok) { failures++; }
+    row(box, res.ok, refs[i], res.ok ? Math.round(res.size / 1024) + " KB" : String(res.status));
+  }
+
+  // app.js 的动态 import
+  var ar = await fetch("js/app.js", { cache: "no-store" });
+  if (ar.ok) {
+    var js = await ar.text();
+    var ire = /from\s+['"](\.[^'"]+)['"]/g;
+    var seen = {};
+    var mm;
+    while ((mm = ire.exec(js)) !== null) {
+      var p = "js/" + mm[1].replace(/^\.\//, "").split("?")[0];
+      if (seen[p]) { continue; }
+      seen[p] = 1;
+      var rr = await head(p);
+      if (!rr.ok) { failures++; }
+      row(box, rr.ok, p, rr.ok ? Math.round(rr.size / 1024) + " KB" : String(rr.status));
+    }
+  }
+
+  // Live2D 关键时刻文件
+  var l2d = [
+    "resources/hiyori_pro_zh/runtime/hiyori_pro_t11.moc3",
+    "resources/hiyori_pro_zh/runtime/hiyori_pro_t11.2048/texture_00.png",
+    "resources/natori_pro_zh/runtime/natori_pro_t06.moc3"
+  ];
+  for (var k = 0; k < l2d.length; k++) {
+    var r3 = await head(l2d[k]);
+    if (!r3.ok) { failures++; }
+    row(box, r3.ok, l2d[k], r3.ok ? Math.round(r3.size / 1024) + " KB" : String(r3.status));
+  }
+}
+
+/* ---------- 2. 单文件版 ---------- */
+async function checkSingle() {
+  var box = $("single");
+  reset(box);
+
+  var r = await head("standalone/index.html");
+  if (!r.ok) { failures++; row(box, false, "standalone/index.html", String(r.status)); return; }
+  row(box, true, "standalone/index.html", (r.size / 1024 / 1024).toFixed(2) + " MB");
+
+  // 自包含校验：不应有外部 script/link
+  var t = await (await fetch("standalone/index.html", { cache: "no-store" })).text();
+  var ext = t.match(/(?:src|href)="(?:https?:)?\/\/[^"]+"/g);
+  if (ext && ext.length) {
+    failures++;
+    row(box, false, "外部引用", ext.slice(0, 3).join(" "), "bad");
+  } else {
+    row(box, true, "自包含", "无外部请求");
+  }
+  if (t.indexOf("_opus_encoder_init") > 0) {
+    row(box, true, "内联 Opus", "已包含");
+  } else {
+    failures++;
+    row(box, false, "内联 Opus", "缺失", "bad");
+  }
+  row(box, true, "生成器", "standalone/build.html");
+}
+
+/* ---------- 3. OTA ---------- */
+function uuid() {
+  if (crypto.randomUUID) { return crypto.randomUUID(); }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    var r = Math.random() * 16 | 0;
+    return (c === "x" ? r : (r & 3 | 8)).toString(16);
+  });
+}
+
+async function checkOta() {
+  var box = $("otabox");
+  reset(box);
+  var url = $("ota").value.trim();
+  if (!url) { row(box, false, "OTA", "地址为空"); failures++; return; }
+
+  var mac = "02:00:00:" + [0, 1, 2].map(function () {
+    return (Math.random() * 256 | 0).toString(16).padStart(2, "0");
+  }).join(":");
+  var cid = "selfcheck-" + uuid().slice(0, 8);
+
+  var body = {
+    version: 0, uuid: "",
+    application: { name: "wuchang-online-selfcheck", version: "1.0.0" },
+    ota: { label: "selfcheck" },
+    board: { type: "bread-compact-wifi", ssid: "", rssi: 0, channel: 0, ip: "", mac: mac },
+    flash_size: 0, minimum_free_heap_size: 0,
+    mac_address: mac, chip_model_name: "esp32s3",
+    chip_info: { model: 0, cores: 0, revision: 0, features: 0 },
+    partition_table: [{ label: "", type: 0, subtype: 0, address: 0, size: 0 }]
+  };
+
+  try {
+    var r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Device-Id": mac, "Client-Id": cid },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) { failures++; row(box, false, "POST " + url, "HTTP " + r.status); return; }
+    row(box, true, "POST", "HTTP 200");
+
+    var j = await r.json();
+    if (j && j.websocket && j.websocket.url) {
+      row(box, true, "websocket.url", j.websocket.url);
+      window.__wsUrl = j.websocket.url;
+    } else {
+      failures++;
+      row(box, false, "响应缺 websocket", JSON.stringify(j).slice(0, 120), "bad");
+    }
+    if (j && j.firmware) {
+      row(box, true, "firmware.version", String(j.firmware.version || "(未指定)"));
+    }
+  } catch (e) {
+    failures++;
+    var hint = e.message;
+    if (/Failed to fetch/i.test(hint)) {
+      hint += "（可能是 CORS 或跨域不可达）";
+    }
+    row(box, false, "POST " + url, hint, "bad");
+  }
+}
+
+/* ---------- 4. WebSocket ---------- */
+function checkWs() {
+  var box = $("wsbox");
+  reset(box);
+  var base = window.__wsUrl || $("ota").value.trim().replace(/\/xiaozhi\/ota\/?$/, "/xiaozhi/v1/");
+  if (!base) { failures++; row(box, false, "WS", "没有可用地址"); return; }
+
+  var u;
+  try { u = new URL(base); } catch (e) {
+    failures++; row(box, false, "WS 地址非法", base); return;
+  }
+  u.searchParams.append("device-id", "02:00:00:aa:bb:cc");
+  u.searchParams.append("client-id", "selfcheck-" + uuid().slice(0, 8));
+
+  row(box, true, "目标", u.toString());
+
+  // 浏览器握手必然带 Origin，这正是要验证的
+  var done = false;
+  var timer = setTimeout(function () {
+    if (done) { return; }
+    done = true;
+    failures++;
+    row(box, false, "握手超时", "8 秒内未收到 hello");
+    finish();
+  }, 8000);
+
+  var ws;
+  try {
+    ws = new WebSocket(u.toString());
+  } catch (e) {
+    clearTimeout(timer);
+    failures++;
+    row(box, false, "创建失败", e.message);
+    finish();
+    return;
+  }
+  ws.binaryType = "arraybuffer";
+
+  ws.onopen = function () {
+    row(box, true, "握手", "101 Switching Protocols（带 Origin 成功）");
+    ws.send(JSON.stringify({
+      type: "hello", version: 1, transport: "websocket",
+      features: { mcp: false, aec: false },
+      audio_params: { format: "opus", sample_rate: 16000, channels: 1, frame_duration: 60 }
+    }));
+  };
+
+  ws.onmessage = function (ev) {
+    if (typeof ev.data === "string") {
+      try {
+        var m = JSON.parse(ev.data);
+        if (m.type === "hello") {
+          row(box, true, "会话建立", "session=" + String(m.session_id || "").slice(0, 8));
+          var ap = m.audio_params;
+          if (ap) { row(box, true, "audio_params", JSON.stringify(ap)); }
+          if (!done) { done = true; clearTimeout(timer); ws.close(); finish(); }
+        }
+      } catch (e) { /* 忽略非 JSON */ }
+    }
+  };
+
+  ws.onerror = function () {
+    if (done) { return; }
+    done = true;
+    clearTimeout(timer);
+    failures++;
+    row(box, false, "连接错误", "浏览器不暴露细节，看控制台", "bad");
+    finish();
+  };
+
+  ws.onclose = function () {
+    if (done) { return; }
+    done = true;
+    clearTimeout(timer);
+    failures++;
+    row(box, false, "提前关闭", "未完成 hello 交换", "bad");
+    finish();
+  };
+}
+
+/* ---------- 汇总 ---------- */
+function finish() {
+  var s = $("summary");
+  if (failures === 0) {
+    s.className = "summary pass";
+    s.textContent = "✓ 全部检查通过，可以正常使用";
+  } else {
+    s.className = "summary fail";
+    s.textContent = "✗ 有 " + failures + " 项失败";
+  }
+}
+
+async function runAll() {
+  $("btnRun").disabled = true;
+  failures = 0;
+  $("summary").className = "dim";
+  $("summary").textContent = "检查中…";
+  window.__wsUrl = null;
+
+  $("assets").innerHTML = ""; $("single").innerHTML = "";
+  $("otabox").innerHTML = ""; $("wsbox").innerHTML = "";
+
+  await checkAssets();
+  await checkSingle();
+  await checkOta();
+  checkWs();
+
+  setTimeout(function () { $("btnRun").disabled = false; }, 9000);
+}
+
+$("btnRun").onclick = runAll;
+</script>
+</body>
+</html>

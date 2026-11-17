@@ -14,27 +14,53 @@
 
 ## 本项目所做的修改
 
-相对于上游，改动很小，列全如下：
+改动尽量小，列全如下。
 
-1. **`index.html`**：OTA 服务器地址输入框的默认值
-   - 上游：`http://127.0.0.1:8002/xiaozhi/ota/`
-   - 本项目：`https://xiaozhi.xiada.cn/xiaozhi/ota/`
-   - 可用 `scripts/set-ota-url.py` 改回或改成任意地址
+### 对上游文件的修改
+
+1. **`index.html`**（两处）
+   - OTA 服务器地址输入框的默认值：
+     上游 `http://127.0.0.1:8002/xiaozhi/ota/` →
+     本项目 `https://xiaozhi.xiada.cn/xiaozhi/ota/`
+   - 在 `</body>` 前加了一个固定的站点导航（指向单文件版与部署自检）。
+     因为本项目部署在 GitHub Pages 上，需要让同仓库的其它页面可被发现。
 
 2. **删除的文件**（上游有、本项目不含）
    - `wakeword_runtime/`、`start.py`：本地唤醒词运行时的 Python 服务。
-     它依赖 sherpa-onnx / sounddevice / pypinyin，只服务"浏览器本地唤醒词"这个
-     可选功能，与本 Web 客户端的语音对话无关。上游 `start.py` 自己也写明：
+     依赖 sherpa-onnx / sounddevice / pypinyin，只服务"浏览器本地唤醒词"
+     这个可选功能，与语音对话无关。上游 `start.py` 自己也写明：
      唤醒词初始化失败时"测试页面仍可正常使用"。
    - `resources/*/*.cmo3`、`resources/*/*.can3`：Live2D 的**编辑源文件**，
      共约 46MB。JS 里没有任何引用，运行时用的是 `runtime/` 下的
      `.moc3` + 贴图 + `.motion3.json`。删除后 62.8MB → 16.6MB。
 
-3. **新增的文件**
-   - `README.md`、`LICENSE`、`NOTICE.md`、`.gitignore`
-   - `deploy/`：部署配置（Caddy 路由片段、docker 启动脚本）
-   - `scripts/set-ota-url.py`：改 OTA 地址的小工具
-   - `scripts/check-assets.py`：部署后自检资源可达性
+### 新增的文件
+
+| 文件 | 说明 |
+|---|---|
+| `README.md`、`LICENSE`、`NOTICE.md` | 项目文档与许可 |
+| `.nojekyll` | 关闭 GitHub Pages 的 Jekyll 处理 |
+| `404.html` | 自定义 404 |
+| `diagnostics.html` | 部署自检：资源、OTA、WebSocket（纯前端实现） |
+| `standalone/index.html` | 单文件版产物（内联 Opus） |
+| `standalone/app.js` | 单文件版源码 |
+| `standalone/build.html` | 浏览器内的单文件生成器 |
+| `standalone/README.md` | 单文件版的协议依据与实测记录 |
+
+### 关于"纯静态"
+
+本项目的部署目标是 GitHub Pages，仓库内只有静态文件
+（HTML / CSS / JS / 图片 / 字体等），没有需要构建或运行的脚本。
+
+早期版本曾包含 `Dockerfile`、`deploy/`（Caddy 反代示例）和 `scripts/`
+（Python 工具：改 OTA 地址、检查资源）。这些用于自建服务器部署，
+在改造成 GitHub Pages 项目时已**全部移除**：
+
+- 改 OTA 地址 → 页面上的输入框（存 localStorage），或改 `index.html` 的默认值
+- 检查资源 → `diagnostics.html`（浏览器内执行）
+- 生成单文件 → `standalone/build.html`（浏览器内执行，用 fetch + Blob）
+
+这样整个工作流都不依赖本地运行时，符合"只能静态文件"的约束。
 
 ## 未改动的部分
 
@@ -46,3 +72,11 @@
 本前端依赖一个兼容 xiaozhi 协议的后端服务（xiaozhi-server），通过
 WebSocket 提供 ASR / LLM / TTS 能力。本项目**不包含**后端，也不包含任何
 后端密钥。
+
+## 协议说明
+
+页面需要 Opus 编解码能力，这是协议要求而非实现选择：
+上行帧由服务端无条件按 Opus 解码（`core/connection.py` 的
+`_decode_opus_packet`），下行 TTS 硬编码 `is_opus=True`
+（`core/providers/tts/base.py`）。因此 `js/utils/libopus.js`
+（上游的 asm.js 版本，825KB）是必需依赖，不可移除。

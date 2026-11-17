@@ -3,6 +3,8 @@
 `index.html` 是**一个可以独立分发的 .html 文件（约 840KB）**，把 Opus 编解码器
 和应用逻辑全部内联，不加载任何外部资源。
 
+在线访问：`https://<用户名>.github.io/wuchang-online/standalone/`
+
 ## 为什么不能去掉 Opus
 
 我一开始想：能不能让客户端用裸 PCM，省掉 800 多 KB 的编解码器？
@@ -59,28 +61,39 @@ xiaozhi 需要 60ms -> MISMATCH
 
 asm.js 版本能精确控制成 60ms/960 样本，和官方设备完全一致，所以选它。
 
-## 生成
+## 重新生成
 
-```bash
-python3 standalone/build.py
-# 或指定默认后端地址
-DEFAULT_OTA_URL=http://localhost:8002/xiaozhi/ota/ python3 standalone/build.py
+本项目部署在 GitHub Pages 上，只能跑静态文件，所以构建也放在浏览器里：
+打开 **[`build.html`](build.html)**，填好默认 OTA 地址，点「生成并下载」。
+
+它用 `fetch` 读取同源的 `../js/utils/libopus.js` 和 `app.js`，拼装后用
+Blob 下载一个 `index.html`。不需要 Python、Node 或任何本地运行时。
+
+```
+standalone/
+├── app.js          # 可读的应用逻辑，改这个
+├── build.html      # 浏览器内的生成器
+├── index.html      # 产物，不要手改
+└── README.md
 ```
 
-`app.js` 是可读的应用逻辑，`build.py` 把它和 `libopus.js` 拼成 `index.html`。
-改逻辑改 `app.js` 再重新生成，不要直接改 `index.html`。
+要改逻辑就改 `app.js`，然后重新生成。`index.html` 是拼接产物，
+直接编辑它下次生成会被覆盖。
+
+> `build.html` 需要通过 HTTP(S) 打开才能 fetch 同源文件。
+> 用 `file://` 打开会被浏览器拦截（CORS）。
 
 ## 怎么用
 
 **必须通过 HTTP(S) 打开，不能双击 file://**
 
-浏览器只在安全上下文里给麦克风权限，`file://` 不算。所以至少要起一个
+浏览器只在安全上下文里给麦克风权限，`file://` 不算。所以至少起一个
 本地静态服务：
 
 ```bash
-cd standalone
+# 在仓库根目录
 python3 -m http.server 8080
-# 打开 http://localhost:8080/
+# 打开 http://localhost:8080/standalone/
 ```
 
 `localhost` 是安全上下文，麦克风可用。部署到线上用 HTTPS 同理。
@@ -106,6 +119,9 @@ python3 -m http.server 8080
 | 24k 解码器解出 | **1440 样本 = 60ms@24k**（与服务端下行一致） |
 | 16k 解码器解出 | **960 样本 = 60ms@16k**（与服务端上行一致） |
 | 波形吻合率 | 661/760（有损编码的正常水平） |
+
+端到端：起本地静态服务 + headless Chrome 加载，页面状态 `就绪，点「连接」`，
+日志 `Opus 编解码器就绪（上行16k/60ms，下行24k/60ms）`。
 
 ## 和完整版（仓库根目录）的区别
 

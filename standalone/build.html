@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>生成单文件版 · wuchang-online</title>
+<style>
+  :root { --bg:#0f1115; --card:#191c23; --fg:#e6e8ee; --dim:#8b93a7;
+          --ok:#3fb950; --err:#f85149; --accent:#4493f8; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:24px; font:14px/1.6 -apple-system,"Segoe UI",system-ui,sans-serif;
+         background:var(--bg); color:var(--fg); }
+  .wrap { max-width:760px; margin:0 auto; }
+  h1 { font-size:18px; margin:0 0 4px; font-weight:600; }
+  .sub { color:var(--dim); font-size:12px; margin-bottom:20px; }
+  .card { background:var(--card); border:1px solid #262a33; border-radius:10px;
+          padding:16px; margin-bottom:14px; }
+  label { display:block; font-size:12px; color:var(--dim); margin-bottom:6px; }
+  input[type=text] { width:100%; padding:9px 11px; border-radius:7px;
+    border:1px solid #2d323c; background:#11141a; color:var(--fg);
+    font:inherit; font-size:13px; }
+  input[type=text]:focus { outline:none; border-color:var(--accent); }
+  .row { display:flex; gap:9px; margin-top:12px; flex-wrap:wrap; }
+  button { padding:9px 16px; border-radius:7px; border:1px solid #2d323c;
+    background:#22262f; color:var(--fg); font:inherit; font-size:13px; cursor:pointer; }
+  button:hover:not(:disabled) { background:#2a2f39; }
+  button:disabled { opacity:.42; cursor:not-allowed; }
+  button.primary { background:#1f6feb; border-color:#1f6feb; }
+  button.primary:hover:not(:disabled) { background:#2a7aef; }
+  a.dl { display:none; margin-top:12px; padding:9px 16px; border-radius:7px;
+         background:#238636; color:#fff; text-decoration:none; font-size:13px; }
+  #log { height:200px; overflow-y:auto; background:#0b0d11; border-radius:7px;
+    padding:10px; font:12px/1.65 ui-monospace,Consolas,monospace;
+    white-space:pre-wrap; word-break:break-all; }
+  #log .i { color:#79c0ff; } #log .e { color:var(--err); }
+  #log .u { color:#7ee787; } #log .w { color:#d29922; }
+  .hint { font-size:12px; color:var(--dim); margin-top:10px; line-height:1.7; }
+  code { background:#22262f; padding:1px 5px; border-radius:4px; font-size:12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>生成单文件版</h1>
+  <div class="sub">把 libopus.js + app.js 打成一个可独立分发的 HTML</div>
+
+  <div class="card">
+    <label for="ota">默认 OTA 地址（会写进生成的文件）</label>
+    <input type="text" id="ota" value="https://xiaozhi.xiada.cn/xiaozhi/ota/">
+    <div class="row">
+      <button class="primary" id="btn">生成并下载</button>
+    </div>
+    <a class="dl" id="dl" download="index.html">↓ 下载 index.html</a>
+    <div class="hint">
+      生成的文件约 840KB，包含内联的 Opus 编解码器，不请求任何外部资源。
+    </div>
+  </div>
+
+  <div class="card"><div id="log"></div></div>
+
+  <div class="card">
+    <div class="hint">
+      <b>为什么需要页面来做这件事：</b>项目部署在 GitHub Pages 上，
+      只能跑静态文件，不能跑 Python/Node 脚本。所以构建步骤搬到了浏览器里：
+      用 <code>fetch</code> 读取同源的 libopus.js 与 app.js，拼装后用 Blob 下载。
+      <br><br>
+      如果页面上打开（而不是 <code>file://</code>）才能 fetch 同源文件。
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+var $ = function (id) { return document.getElementById(id); };
+
+function log(msg, cls) {
+  var box = $("log");
+  var d = document.createElement("div");
+  d.className = cls || "i";
+  d.textContent = msg;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+// 模板里的 {{...}} 占位，避免和外层 HTML 花括号冲突
+var TEMPLATE = [
+'<!DOCTYPE html>',
+'<html lang="zh-CN">',
+'<head>',
+'<meta charset="UTF-8">',
+'<meta name="viewport" content="width=device-width, initial-scale=1">',
+'<title>小缺 · 单文件语音对话</title>',
+'<style>',
+'  :root { --bg:#0f1115; --card:#191c23; --fg:#e6e8ee; --dim:#8b93a7;',
+'          --ok:#3fb950; --warn:#d29922; --err:#f85149; --accent:#4493f8; }',
+'  * { box-sizing:border-box; }',
+'  body { margin:0; padding:24px; font:14px/1.6 -apple-system,"Segoe UI",system-ui,sans-serif;',
+'         background:var(--bg); color:var(--fg); }',
+'  .wrap { max-width:720px; margin:0 auto; }',
+'  h1 { font-size:18px; margin:0 0 4px; font-weight:600; }',
+'  .sub { color:var(--dim); font-size:12px; margin-bottom:20px; }',
+'  .card { background:var(--card); border:1px solid #262a33; border-radius:10px;',
+'          padding:16px; margin-bottom:14px; }',
+'  label { display:block; font-size:12px; color:var(--dim); margin-bottom:6px; }',
+'  input[type=text] { width:100%; padding:9px 11px; border-radius:7px;',
+'    border:1px solid #2d323c; background:#11141a; color:var(--fg);',
+'    font:inherit; font-size:13px; }',
+'  input[type=text]:focus { outline:none; border-color:var(--accent); }',
+'  .row { display:flex; gap:9px; margin-top:12px; flex-wrap:wrap; }',
+'  button { padding:9px 16px; border-radius:7px; border:1px solid #2d323c;',
+'    background:#22262f; color:var(--fg); font:inherit; font-size:13px; cursor:pointer; }',
+'  button:hover:not(:disabled) { background:#2a2f39; }',
+'  button:disabled { opacity:.42; cursor:not-allowed; }',
+'  button.primary { background:#1f6feb; border-color:#1f6feb; }',
+'  button.primary:hover:not(:disabled) { background:#2a7aef; }',
+'  button.danger { background:#8b2c2c; border-color:#a33; }',
+'  .status { display:flex; align-items:center; gap:8px; font-size:13px; }',
+'  .dot { width:8px; height:8px; border-radius:50%; background:#555; flex:none; }',
+'  .dot.on { background:var(--ok); box-shadow:0 0 8px var(--ok); }',
+'  .dot.busy { background:var(--warn); }',
+'  .dot.err { background:var(--err); }',
+'  #log { height:240px; overflow-y:auto; background:#0b0d11; border-radius:7px;',
+'    padding:10px; font:12px/1.65 ui-monospace,Consolas,monospace;',
+'    white-space:pre-wrap; word-break:break-all; }',
+'  #log .t { color:#5a6274; } #log .i { color:#79c0ff; }',
+'  #log .w { color:var(--warn); } #log .e { color:var(--err); }',
+'  #log .u { color:#7ee787; } #log .a { color:#d2a8ff; }',
+'  .meter { height:3px; background:#22262f; border-radius:2px; margin-top:10px; overflow:hidden; }',
+'  .meter > i { display:block; height:100%; width:0; background:var(--ok); transition:width .08s linear; }',
+'  .hint { font-size:12px; color:var(--dim); margin-top:10px; line-height:1.7; }',
+'</style>',
+'</head>',
+'<body>',
+'<div class="wrap">',
+'  <h1>小缺 · 单文件语音对话</h1>',
+'  <div class="sub">单个 .html · 内置 Opus 编解码 · 无任何外部请求</div>',
+'',
+'  <div class="card">',
+'    <label for="ota">OTA 服务器地址</label>',
+'    <input type="text" id="ota" value="@@OTA@@">',
+'    <div class="row">',
+'      <button class="primary" id="btnConnect">连接</button>',
+'      <button id="btnTalk" disabled>按住说话</button>',
+'      <button class="danger" id="btnClose" disabled>断开</button>',
+'    </div>',
+'    <div class="meter"><i id="lvl"></i></div>',
+'    <div class="hint">',
+'      连上后点「按住说话」（或按住空格）。服务端自己做 VAD 断句，松开不会立刻结束。',
+'      回答会自动播放。',
+'    </div>',
+'  </div>',
+'',
+'  <div class="card">',
+'    <div class="status"><span class="dot" id="dot"></span><span id="state">正在初始化 Opus…</span></div>',
+'  </div>',
+'',
+'  <div class="card"><div id="log"></div></div>',
+'</div>',
+'',
+'<script>',
+'@@OPUS@@',
+'</' + 'script>',
+'',
+'<script>',
+'@@APP@@',
+'</' + 'script>',
+'</body>',
+'</html>'
+].join('\n');
+
+async function build() {
+  var ota = $("ota").value.trim() || "https://xiaozhi.xiada.cn/xiaozhi/ota/";
+  $("btn").disabled = true;
+  $("dl").style.display = "none";
+  log("开始构建…", "i");
+
+  try {
+    // 同源读取（Pages 上是同域，能 fetch）
+    log("读取 ../js/utils/libopus.js", "i");
+    var r1 = await fetch("../js/utils/libopus.js");
+    if (!r1.ok) { throw new Error("libopus.js HTTP " + r1.status); }
+    var opusSrc = await r1.text();
+    log("  " + Math.round(opusSrc.length / 1024) + " KB", "u");
+
+    log("读取 app.js", "i");
+    var r2 = await fetch("app.js");
+    if (!r2.ok) { throw new Error("app.js HTTP " + r2.status); }
+    var appSrc = await r2.text();
+    log("  " + Math.round(appSrc.length / 1024) + " KB", "u");
+
+    // 防止 asm.js 里出现 </script 提前闭合
+    if (/<\/script/i.test(opusSrc)) {
+      opusSrc = opusSrc.replace(/<\/script/gi, "<\\/script");
+      log("  已转义 libopus 中的 </script", "w");
+    }
+
+    var out = TEMPLATE
+      .replace("@@OTA@@", ota.replace(/"/g, "&quot;"))
+      .replace("@@OPUS@@", function () { return opusSrc; })
+      .replace("@@APP@@", function () { return appSrc; });
+
+    var blob = new Blob([out], { type: "text/html;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = $("dl");
+    a.href = url;
+    a.style.display = "inline-block";
+    log("完成：" + (blob.size / 1024 / 1024).toFixed(2) + " MB", "u");
+    log("点下面的按钮下载 index.html", "u");
+    log("", "i");
+    log("提示：下载后要用 http(s) 打开，file:// 下浏览器不给麦克风权限。", "w");
+
+  } catch (e) {
+    log("失败：" + e.message, "e");
+    log("如果是 file:// 打开本页，fetch 同源文件会被浏览器拦截，", "w");
+    log("请用本地静态服务或直接访问 GitHub Pages 上的这个页面。", "w");
+  } finally {
+    $("btn").disabled = false;
+  }
+}
+
+$("btn").onclick = build;
+log("就绪。点「生成并下载」。", "i");
+</script>
+</body>
+</html>
