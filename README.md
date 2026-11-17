@@ -1,6 +1,6 @@
-# 小缺 · 数字分身
+# 阿昌 · 数字分身
 
-[吴昌](https://wuchang.me/)的数字分身：**打开网页就能直接说话**。
+阿昌的数字分身：**打开网页就能直接说话**。
 麦克风 → 实时语音识别（ASR）→ 大模型（LLM）→ 克隆音色语音合成（TTS）→ 播放，
 一圈下来就是你问我答，头像和波纹跟着声音动。
 
@@ -67,7 +67,7 @@ http://localhost:8080/?ota=http://127.0.0.1:8002/xiaozhi/ota/
 | 想改什么 | 改哪里 |
 |---|---|
 | 头像 | 替换 `assets/avatar.png` 和 `assets/avatar@512.png`（正面正方形最好） |
-| 名字 / 副标题 | [`index.html`](index.html) 里的 `<h1>` 和「吴昌的数字分身」 |
+| 名字 / 副标题 | [`index.html`](index.html) 里的 `<h1>` 和「阿昌的数字分身」 |
 | 页面标题、分享卡片 | [`index.html`](index.html) 里的 `<title>` / `og:*` |
 | 主题色、卡片、动画 | [`css/twin.src.css`](css/twin.src.css)，改完要重新编译（见下） |
 | 断句灵敏度 | `js/twin.js` 里的 `vad`（默认按环境噪声自适应，一般不用动） |

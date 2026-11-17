@@ -1,4 +1,4 @@
-/** Tailwind CSS 配置（小缺数字分身页）
+/** Tailwind CSS 配置（阿昌数字分身页）
  *
  * 只扫描 index.html 与 js/twin.js，产出 css/twin.css。
  * 构建方式见 tools/build-css.ps1。

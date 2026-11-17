@@ -1,5 +1,5 @@
 /* =====================================================================
- * 小缺 · 数字分身 —— 页面逻辑
+ * 阿昌 · 数字分身 —— 页面逻辑
  *
  * 一句话流程：
  *   打开页面 → 后台先把 OTA + WebSocket 建好 → 点「开始对话」开麦
@@ -189,7 +189,7 @@ function log(msg) {
         debugEl.textContent = LOGS.join("\n");
         debugEl.scrollTop = debugEl.scrollHeight;
     }
-    try { console.log("[小缺] " + msg); } catch (e) { /* 忽略 */ }
+    try { console.log("[阿昌] " + msg); } catch (e) { /* 忽略 */ }
 }
 
 /* =====================================================================
@@ -204,7 +204,7 @@ function pushRow(role, text) {
     var who = document.createElement("span");
     who.className = "mt-0.5 w-8 shrink-0 text-[10px] tracking-widest " +
         (role === "ai" ? "text-sky-300/70" : "text-slate-500");
-    who.textContent = role === "ai" ? "小缺" : "我";
+    who.textContent = role === "ai" ? "阿昌" : "我";
 
     var body = document.createElement("span");
     body.setAttribute("data-text", "");
