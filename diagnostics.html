@@ -46,15 +46,14 @@
 <body>
 <div class="wrap">
   <h1>部署自检</h1>
-  <div class="sub">检查资源可达性、OTA 接口、WebSocket 握手</div>
+  <div class="sub">检查资源可达性、OTA 接口、WebSocket 握手 · <a href="./" style="color:var(--accent)">← 返回数字分身</a></div>
 
   <div class="card">
     <label for="ota">OTA 服务器地址</label>
-    <input type="text" id="ota" value="http://localhost:8002/xiaozhi/ota/"
+    <input type="text" id="ota" value="https://xiaozhi.xiada.cn/xiaozhi/ota/"
            placeholder="填你自己的 xiaozhi-server 地址，如 https://your-server.com/xiaozhi/ota/">
     <div class="hint" style="margin-top:8px">
-      <b>这里要填你自己的后端。</b>默认的 <code>localhost:8002</code> 只在你本机
-      跑着 xiaozhi-server 时有效。别人的服务器地址填进来才能检查。
+      默认是本站首页用的后端。要检查别的服务器，把地址换成 <code>https://your-server/xiaozhi/ota/</code> 再点运行。
     </div>
     <div class="row">
       <button class="primary" id="btnRun">运行全部检查</button>
@@ -158,34 +157,25 @@ async function checkAssets() {
     row(box, res.ok, refs[i], res.ok ? Math.round(res.size / 1024) + " KB" : String(res.status));
   }
 
-  // app.js 的动态 import
-  var ar = await fetch("js/app.js", { cache: "no-store" });
+  // app.js 的动态 import（首页已改用 js/twin.js，不再有 ES module 依赖）
+  var ar = await fetch("js/twin.js", { cache: "no-store" });
   if (ar.ok) {
     var js = await ar.text();
-    var ire = /from\s+['"](\.[^'"]+)['"]/g;
-    var seen = {};
-    var mm;
-    while ((mm = ire.exec(js)) !== null) {
-      var p = "js/" + mm[1].replace(/^\.\//, "").split("?")[0];
-      if (seen[p]) { continue; }
-      seen[p] = 1;
-      var rr = await head(p);
-      if (!rr.ok) { failures++; }
-      row(box, rr.ok, p, rr.ok ? Math.round(rr.size / 1024) + " KB" : String(rr.status));
+    if (js.indexOf("CONFIG") > 0 && js.indexOf("/xiaozhi/ota/") > 0) {
+      row(box, true, "OTA 默认值", "已内置（改 js/twin.js 顶部 CONFIG）");
+    } else {
+      failures++;
+      row(box, false, "OTA 默认值", "未在 js/twin.js 里找到", "bad");
     }
+  } else {
+    failures++;
+    row(box, false, "js/twin.js", "HTTP " + ar.status, "bad");
   }
 
-  // Live2D 关键时刻文件
-  var l2d = [
-    "resources/hiyori_pro_zh/runtime/hiyori_pro_t11.moc3",
-    "resources/hiyori_pro_zh/runtime/hiyori_pro_t11.2048/texture_00.png",
-    "resources/natori_pro_zh/runtime/natori_pro_t06.moc3"
-  ];
-  for (var k = 0; k < l2d.length; k++) {
-    var r3 = await head(l2d[k]);
-    if (!r3.ok) { failures++; }
-    row(box, r3.ok, l2d[k], r3.ok ? Math.round(r3.size / 1024) + " KB" : String(r3.status));
-  }
+  // 高分屏头像走 srcset，不进上面的 refs 循环
+  var r3 = await head("assets/avatar@512.png");
+  if (!r3.ok) { failures++; }
+  row(box, r3.ok, "assets/avatar@512.png", r3.ok ? Math.round(r3.size / 1024) + " KB" : String(r3.status));
 }
 
 /* ---------- 2. 单文件版 ---------- */

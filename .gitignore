@@ -35,3 +35,6 @@ upstream/
 # 提交信息临时文件
 .commitmsg*
 .commit-msg*
+
+# Tailwind 本地构建依赖（重新生成见 tools/build-css.ps1）
+.build/
