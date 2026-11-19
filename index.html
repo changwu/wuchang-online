@@ -86,7 +86,11 @@
             </section>
         </div>
 
-        <!-- 页脚：版权与许可（上游归属见 NOTICE.md） -->
+        <!-- 一句禅语：安静时缓慢轮换，通话中不打扰 -->
+        <p id="zen"
+            class="mt-2 text-center text-[11px] leading-4 tracking-wider text-slate-600">日日是好日</p>
+
+        <!-- 页脚：站点署名（许可与上游归属见 NOTICE.md / LICENSE） -->
         <footer class="flex items-center justify-center gap-2.5 text-[10px] text-slate-600">
             <a id="devLinks" href="diagnostics.html" class="hidden transition-colors hover:text-slate-400">部署自检</a>
             <span id="devSep" class="hidden" aria-hidden="true">·</span>
@@ -94,7 +98,7 @@
             <span id="devSep2" class="hidden" aria-hidden="true">·</span>
             <span>&copy; 2026 wuchang.me</span>
             <span aria-hidden="true">·</span>
-            <span>MIT 许可</span>
+            <span>阿昌的数字分身</span>
         </footer>
     </main>
 
@@ -106,6 +110,8 @@
 
     <!-- Opus 编解码（小智协议上行/下行都是 Opus） -->
     <script src="js/utils/libopus.js?v=1"></script>
+    <!-- 一句禅语（纯展示，不参与语音链路） -->
+    <script src="js/zen.js?v=1"></script>
     <!-- 主逻辑 -->
     <script src="js/twin.js?v=1"></script>
 </body>

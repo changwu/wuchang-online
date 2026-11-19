@@ -356,6 +356,13 @@ body[data-state="error"] .pill-dot {
   touch-action: none;
 }
 
+/* 底部那句禅语：和页脚留一点呼吸，别贴在一起 */
+#zen {
+  min-height: 1rem;          /* 换行时高度不跳 */
+  margin-bottom: 0.375rem;
+  transition: opacity 0.6s ease;
+}
+
 /* 调试面板（?debug=1 时才插进 DOM） */
 #debug-panel {
   @apply fixed bottom-3 left-3 z-50 max-h-40 w-[min(28rem,calc(100vw-1.5rem))] overflow-auto rounded-lg bg-slate-950/85 p-2 font-mono text-[10px] leading-4 text-slate-400 ring-1 ring-white/10;
