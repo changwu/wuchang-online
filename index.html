@@ -29,12 +29,13 @@
 
     <main class="relative mx-auto flex min-h-dvh w-full max-w-lg flex-col px-5 pb-5 pt-4">
 
-        <!-- 顶栏：连接状态 -->
-        <header class="flex w-full items-center justify-between px-1 text-[11px] tracking-wider text-slate-500">
-            <span class="inline-flex items-center gap-2">
+        <!-- 顶栏：连接状态 + 右上角一句轮换的禅语 -->
+        <header class="flex w-full items-center justify-between gap-2 px-1 text-[11px] tracking-wider text-slate-500">
+            <span class="inline-flex shrink-0 items-center gap-2">
                 <span class="pill-dot h-1.5 w-1.5 rounded-full"></span>
                 <span id="pillText">未连接</span>
             </span>
+            <span id="zen" aria-live="off"><span id="zenText">日日是好日</span></span>
         </header>
 
         <!-- 主体 -->
@@ -85,10 +86,6 @@
                 </p>
             </section>
         </div>
-
-        <!-- 一句禅语：安静时缓慢轮换，通话中不打扰 -->
-        <p id="zen"
-            class="mt-2 text-center text-[11px] leading-4 tracking-wider text-slate-600">日日是好日</p>
 
         <!-- 页脚：站点署名（许可与上游归属见 NOTICE.md / LICENSE） -->
         <footer class="flex items-center justify-center gap-2.5 text-[10px] text-slate-600">

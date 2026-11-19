@@ -50,6 +50,7 @@
 | `standalone/app.js` | 单文件版源码 |
 | `standalone/build.html` | 浏览器内的单文件生成器 |
 | `standalone/README.md` | 单文件版的协议依据与实测记录 |
+| `js/zen.js` | 首页顶栏右上角那句名言／禅语，自动翻页；纯展示，不参与语音链路 |
 
 ### 关于"纯静态"
 

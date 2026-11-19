@@ -356,11 +356,28 @@ body[data-state="error"] .pill-dot {
   touch-action: none;
 }
 
-/* 底部那句禅语：和页脚留一点呼吸，别贴在一起 */
+/* 右上角那句禅语
+ *
+ * 单行、超长省略：顶栏左边是连接状态，宽屏窄屏都不能被它挤乱。
+ * 翻页动画由 js/zen.js 用内联 transform 控制，这里只提供排版与裁切。
+ */
 #zen {
-  min-height: 1rem;          /* 换行时高度不跳 */
-  margin-bottom: 0.375rem;
-  transition: opacity 0.6s ease;
+  min-width: 0;              /* 允许在 flex 行里被压缩 */
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-align: right;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 10px;           /* 比左侧状态小一号，只做背景点缀 */
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  color: #475569;            /* slate-600 */
+}
+
+/* 翻页时纵向滑动的是这个内层，外层裁切 */
+#zenText {
+  display: inline-block;
+  will-change: transform, opacity;
 }
 
 /* 调试面板（?debug=1 时才插进 DOM） */
