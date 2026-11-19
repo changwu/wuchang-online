@@ -29,14 +29,12 @@
 
     <main class="relative mx-auto flex min-h-dvh w-full max-w-lg flex-col px-5 pb-5 pt-4">
 
-        <!-- 顶栏：连接状态 + 仓库入口 -->
+        <!-- 顶栏：连接状态 -->
         <header class="flex w-full items-center justify-between px-1 text-[11px] tracking-wider text-slate-500">
             <span class="inline-flex items-center gap-2">
                 <span class="pill-dot h-1.5 w-1.5 rounded-full"></span>
                 <span id="pillText">未连接</span>
             </span>
-            <a href="https://github.com/changwu/wuchang-online" target="_blank" rel="noopener"
-                class="transition-colors hover:text-slate-300">GitHub</a>
         </header>
 
         <!-- 主体 -->
@@ -88,13 +86,15 @@
             </section>
         </div>
 
-        <!-- 页脚 -->
+        <!-- 页脚：版权与许可（上游归属见 NOTICE.md） -->
         <footer class="flex items-center justify-center gap-2.5 text-[10px] text-slate-600">
             <a id="devLinks" href="diagnostics.html" class="hidden transition-colors hover:text-slate-400">部署自检</a>
             <span id="devSep" class="hidden" aria-hidden="true">·</span>
             <a id="devStandalone" href="standalone/" class="hidden transition-colors hover:text-slate-400">单文件版</a>
             <span id="devSep2" class="hidden" aria-hidden="true">·</span>
-            <span>wuchang.me</span>
+            <span>&copy; 2026 wuchang.me</span>
+            <span aria-hidden="true">·</span>
+            <span>MIT 许可</span>
         </footer>
     </main>
 
