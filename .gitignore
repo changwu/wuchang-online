@@ -38,3 +38,8 @@ upstream/
 
 # Tailwind 本地构建依赖（重新生成见 tools/build-css.ps1）
 .build/
+
+# IDE & Trae artifacts
+.trae-html-share-packages/
+.trae/
+.aider*
