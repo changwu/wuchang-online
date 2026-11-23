@@ -196,8 +196,14 @@ function log(msg) {
  * 对话文字
  * =================================================================== */
 function pushRow(role, text) {
-    if (!el.transcript) { return null; }
+    if (!el.transcript) { return; }
     removePlaceholder();
+
+    // 如果 transcript 里的行数超过 4 行，删掉最早的，保持界面整洁
+    while (el.transcript.children.length >= 4) {
+        el.transcript.removeChild(el.transcript.firstChild);
+    }
+
     var row = document.createElement("div");
     row.className = "t-row flex shrink-0 items-start gap-2";
 
@@ -208,7 +214,7 @@ function pushRow(role, text) {
 
     var body = document.createElement("span");
     body.setAttribute("data-text", "");
-    body.className = "wrap-any line-clamp-2 flex-1 " +
+    body.className = "wrap-any flex-1 " +
         (role === "ai" ? "text-sky-50/90" : "text-slate-400");
     body.textContent = text || "";
 
@@ -216,9 +222,6 @@ function pushRow(role, text) {
     row.appendChild(body);
     el.transcript.appendChild(row);
 
-    while (el.transcript.children.length > 3) {
-        el.transcript.removeChild(el.transcript.firstChild);
-    }
     return row;
 }
 
@@ -1048,6 +1051,12 @@ function startSession() {
         app.ttsActive = false;
         setBusy(false);
         vadReset(true);
+
+        // 通知服务端：会话正式开始（用于触发主动打招呼）
+        if (app.ws && app.ws.readyState === WebSocket.OPEN) {
+            app.ws.send(JSON.stringify({ type: "event", event: "session_start" }));
+        }
+
         setState("listening", "先安静一下，我在听环境…");
         syncButton();
         log("对话开始：持续监听（mode=manual）");
