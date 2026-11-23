@@ -196,14 +196,8 @@ function log(msg) {
  * 对话文字
  * =================================================================== */
 function pushRow(role, text) {
-    if (!el.transcript) { return; }
+    if (!el.transcript) { return null; }
     removePlaceholder();
-
-    // 如果 transcript 里的行数超过 4 行，删掉最早的，保持界面整洁
-    while (el.transcript.children.length >= 4) {
-        el.transcript.removeChild(el.transcript.firstChild);
-    }
-
     var row = document.createElement("div");
     row.className = "t-row flex shrink-0 items-start gap-2";
 
@@ -214,7 +208,7 @@ function pushRow(role, text) {
 
     var body = document.createElement("span");
     body.setAttribute("data-text", "");
-    body.className = "wrap-any flex-1 " +
+    body.className = "wrap-any line-clamp-2 flex-1 " +
         (role === "ai" ? "text-sky-50/90" : "text-slate-400");
     body.textContent = text || "";
 
@@ -222,6 +216,9 @@ function pushRow(role, text) {
     row.appendChild(body);
     el.transcript.appendChild(row);
 
+    while (el.transcript.children.length > 3) {
+        el.transcript.removeChild(el.transcript.firstChild);
+    }
     return row;
 }
 
